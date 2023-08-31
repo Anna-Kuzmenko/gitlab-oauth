@@ -1,44 +1,34 @@
 import NextAuth, { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import FacebookProvider from "next-auth/providers/facebook"
-import GithubProvider from "next-auth/providers/github"
-import TwitterProvider from "next-auth/providers/twitter"
-import Auth0Provider from "next-auth/providers/auth0"
+import GitlabProvider from "next-auth/providers/gitlab"
 
-// For more information on each option (and a full list of options) go to
-// https://next-auth.js.org/configuration/options
 export const authOptions: NextAuthOptions = {
-  // https://next-auth.js.org/configuration/providers/oauth
   providers: [
-    Auth0Provider({
-      clientId: process.env.AUTH0_ID,
-      clientSecret: process.env.AUTH0_SECRET,
-      issuer: process.env.AUTH0_ISSUER,
-    }),
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_ID,
-      clientSecret: process.env.FACEBOOK_SECRET,
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID,
-      clientSecret: process.env.GOOGLE_SECRET,
-    }),
-    TwitterProvider({
-      clientId: process.env.TWITTER_ID,
-      clientSecret: process.env.TWITTER_SECRET,
-      version: "2.0",
+    GitlabProvider({
+      clientId: process.env.GITLAB_CLIENT_ID,
+      clientSecret: process.env.GITLAB_CLIENT_SECRET,
+      authorization: { params: { scope: process.env.PUBLIC_URL_GITLAB_SCOPE } },
     }),
   ],
   callbacks: {
-    async jwt({ token }) {
-      token.userRole = "admin"
-      return token
+    async jwt({ token, account, user }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      if (user) {
+        token.uid = user.id;
+      }
+      return token;
+    },
+    async session({ session, token, user }) {
+      session.accessToken = token.accessToken
+      // session.user?.name = token.
+
+      console.log({session, token})
+      
+      return session
     },
   },
 }
+
 
 export default NextAuth(authOptions)
